@@ -8,7 +8,7 @@ all: sobel process
 
 # Build sobel executable
 sobel:
-	verilator --cc rtl/sobel.v --exe sim/main.cpp --build
+	verilator --cc rtl/sobel.sv --exe sim/main.cpp --build
 
 # Process all images
 process:

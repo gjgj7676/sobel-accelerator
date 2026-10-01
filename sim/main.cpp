@@ -1,5 +1,4 @@
-// This will show up as an error, but it works i promise verilator needs these two lines to work
-#include "Vsobel.h" // must match verilog module name with V as the prefix (e.g. module.v = Vmodule.h)
+#include "Vsobel.h"
 #include "verilated.h"
 
 #include <iostream>
@@ -8,7 +7,6 @@
 #include <string>
 
 int main(int argc, char** argv) {
-    // Input and argument handling
     if (argc < 3) {
         std::cout << "Usage: ./Vsobel input.pgm output.pgm\n";
         return 1;
@@ -17,9 +15,6 @@ int main(int argc, char** argv) {
     std::string input_file = argv[1];
     std::string output_file = argv[2];
 
-    // -----------------------------
-    // Load PGM file and parse input
-    // -----------------------------
     std::ifstream infile(input_file);
     if (!infile) {
         std::cout << "Failed to open input file\n";
@@ -33,7 +28,6 @@ int main(int argc, char** argv) {
 
     std::vector<int> image(width * height);
 
-    // repeat for all rows/cols
     for (int i = 0; i < width * height; i++) {
         infile >> image[i];
     }
@@ -41,19 +35,14 @@ int main(int argc, char** argv) {
 
     std::cout << "Loaded image: " << width << "x" << height << "\n";
 
-    // ---------------------------------------------
-    // Create instance of the sobel verilator module
-    // ---------------------------------------------
-    Vsobel* top = new Vsobel; 
+    Vsobel* top = new Vsobel;
     top->image_width = width;
 
-    // Set initial states
     top->clk = 0;
     top->rst = 1;
     top->valid_in = 0;
     top->pixel_in = 0;
-    
-    // reset for a few cycles then release
+
     for (int i = 0; i < 5; i++) {
         top->clk = !top->clk;
         top->eval();
@@ -62,32 +51,30 @@ int main(int argc, char** argv) {
 
     std::vector<int> output(width * height, 0);
 
-    int pixel_index = 0;
-
-    // ---------------------------------
-    // Stream image into hardware module
-    // ---------------------------------
-    for (int i = 0; i < width * height; i++) {
-        // pass through 
+    // The module has a latency of (width + 2) clocks: the result for the window
+    // centred on pixel n appears on clock edge n + width + 2. Run a couple of
+    // extra clocks after the last pixel to collect the final results, and store
+    // each result at the position of its centre pixel.
+    const int total_clocks = width * height + 2;
+    for (int i = 0; i < total_clocks; i++) {
         top->valid_in = 1;
-        top->pixel_in = image[i];
+        top->pixel_in = (i < width * height) ? image[i] : 0;
 
-        // One clock cycle
         top->clk = 0;
         top->eval();
         top->clk = 1;
         top->eval();
 
         if (top->valid_out) {
-            output[i] = top->pixel_out;
+            int centre = i - (width + 2);
+            if (centre >= 0 && centre < width * height) {
+                output[centre] = top->pixel_out;
+            }
         }
     }
 
     delete top;
 
-    // ---------------------
-    // Write output PGM file
-    // ---------------------
     std::ofstream outfile(output_file);
 
     outfile << "P2\n";
