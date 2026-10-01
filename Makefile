@@ -2,6 +2,9 @@
 IN_DIR  := images_in
 PGM_DIR := build_pgm
 OUT_DIR := images_out
+SV_DIR := build_sv
+
+.PHONY: all sobel process tb test clean
 
 # Default target
 all: sobel process
@@ -34,3 +37,12 @@ clean:
 	rm -rf obj_dir
 	rm -rf "$(PGM_DIR)"
 	rm -rf "$(OUT_DIR)"
+	rm -rf build_sv
+
+tb:
+	mkdir -p $(SV_DIR)
+	verilator --binary --timing --timescale 1ns/1ps -Wno-fatal --top-module sobel_tb \
+	    rtl/sobel.sv tb/sobel_tb.sv -Mdir $(SV_DIR)/obj
+
+test: tb
+	./$(SV_DIR)/obj/Vsobel_tb

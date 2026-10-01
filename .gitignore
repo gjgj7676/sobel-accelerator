@@ -44,3 +44,4 @@ obj_dir/
 images_in/..
 images_out/
 build_pgm/
+build_sv/
