@@ -211,22 +211,56 @@ module sobel_tb;
     // ------------------------------------------------------------------
     // PGM (ASCII, P2) read and write
     // ------------------------------------------------------------------
+    // Reads the next unsigned integer from an ASCII PGM, skipping whitespace
+    // and '#' comment lines (many photos carry an embedded comment that
+    // ImageMagick copies into the header). Returns -1 at end of file.
+    task automatic next_int(input int fd, output int value);
+        int c;
+        value = -1;
+        c = $fgetc(fd);
+        while (c != -1) begin
+            if (c == "#") begin
+                while (c != -1 && c != "\n") c = $fgetc(fd);
+            end else if (c == " " || c == "\n" || c == "\r" || c == "\t") begin
+                c = $fgetc(fd);
+            end else begin
+                break;
+            end
+        end
+        if (c >= "0" && c <= "9") begin
+            value = 0;
+            while (c >= "0" && c <= "9") begin
+                value = value * 10 + (c - "0");
+                c = $fgetc(fd);
+            end
+        end
+    endtask
+
     task automatic read_pgm(input string path);
-        int fd, r, w, h, maxv, v;
-        string magic;
+        int fd, c1, c2, w, h, maxv, v;
 
         fd = $fopen(path, "r");
         if (fd == 0) $fatal(1, "Cannot open input file %s", path);
 
-        r = $fscanf(fd, "%s", magic);
-        if (magic != "P2") $fatal(1, "%s is not an ASCII PGM (expected P2, got %s)", path, magic);
+        c1 = $fgetc(fd);
+        c2 = $fgetc(fd);
+        if (c1 != "P" || c2 != "2")
+            $fatal(1, "%s is not an ASCII PGM (expected P2 header)", path);
 
-        r = $fscanf(fd, "%d %d %d", w, h, maxv);
+        next_int(fd, w);
+        next_int(fd, h);
+        next_int(fd, maxv);
+        if (w < 3 || h < 3 || maxv < 1)
+            $fatal(1, "Bad PGM header in %s (width %0d, height %0d, maxval %0d)", path, w, h, maxv);
+        if (w > dut.WIDTH)
+            $fatal(1, "Image is %0d wide but the module's line buffers hold %0d pixels (raise the WIDTH parameter)", w, dut.WIDTH);
+
         W = w;
         H = h;
         img = new[w * h];
         for (int i = 0; i < w * h; i++) begin
-            r = $fscanf(fd, "%d", v);
+            next_int(fd, v);
+            if (v < 0) $fatal(1, "%s ended early: expected %0d pixels, found %0d", path, w * h, i);
             img[i] = 8'((v * 255) / maxv);
         end
         $fclose(fd);
