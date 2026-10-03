@@ -32,6 +32,12 @@ module sobel #(
     //for B
     localparam int COL_W = $clog2(B_WIDTH);
 
+    //Splitting RGB image to R , G , B pixels
+    logic [7:0] R,G,B;
+    assign R = pixel_in[23:16];
+    assign G = pixel_in[15:8];
+    assign B = pixel_in[7:0];
+
     // position of the pixel currently being accepted (This is for whole RGB image)
     logic [COL_W-1:0] col;
     logic [15:0]      row;
@@ -47,8 +53,6 @@ module sobel #(
     //for B
     logic [COL_W-1:0] B_col;
     logic [15:0]      B_row;
-
-    module rgb_splitter (  /*write this later*/  );
 
     // line buffers: line_buffer1 holds the previous row, line_buffer2 the one before
 
@@ -66,6 +70,25 @@ module sobel #(
     logic [7:0] B_line_buffer2 [B_WIDTH];   
 
     // 3x3 window shift registers (r0 = newest row, r2 = oldest row)
+
+    logic [24:0] r0_0, r0_1, r0_2;
+    logic [24:0] r1_0, r1_1, r1_2;
+    logic [24:0] r2_0, r2_1, r2_2;
+
+    
+    //Each input pixel in RGB is represented as this 
+    logic [24:0] r0_0 = (R_r0_0, G_r0_0, B_r0_0);
+    logic [24:0] r0_1 = (R_r0_1, G_r0_1, B_r0_1);
+    logic [24:0] r0_2 = (R_r0_2, G_r0_2, B_r0_2);
+    logic [24:0] r1_0 = (R_r1_0, G_r1_0, B_r1_0);
+    logic [24:0] r1_1 = (R_r1_1, G_r1_1, B_r1_1);
+    logic [24:0] r1_2 = (R_r1_2, G_r1_2, B_r1_2);
+    logic [24:0] r2_0 = (R_r2_0, G_r2_0, B_r2_0);
+    logic [24:0] r2_1 = (R_r2_1, G_r2_1, B_r2_1);
+    logic [24:0] r2_2 = (R_r2_2, G_r2_2, B_r2_2);
+
+
+
 
     //Made separate shift registers for R , G , B   
     //for R    
@@ -326,6 +349,22 @@ module sobel #(
                 
             end
         end
+
+        //combining R,G,B elements into a single pixel
+        assign grad_r0_0 = (R_grad_wire_0, G_grad_wire_0 , Bgrad_wire_0);
+        assign grad_r0_1 = 
+        assign grad_r0_2 =
+        assign grad_r1_0 =   
+        assign grad_r1_1 =
+        assign grad_r1_2 =
+        assign grad_r2_0 =
+        assign graf_r2_1 =
+        assign grad_r2_2 =    
+
+        //Output image obtained     
+        logic [24:0] grad_r0_0, grad_r0_1, grad_r0_2;
+        logic [24:0] grad_r1_0, grad_r1_1, grad_r1_2;
+        logic [24:0] grad_r2_0, grad_r2_1, grad_r2_2;
 
         RGB_assembler( /*write this later*/  )   
     end
