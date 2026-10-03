@@ -61,29 +61,88 @@ module sobel #(
     logic [7:0] B_r2_0, B_r2_1, B_r2_2;   
 
     // high when the window registers hold a complete 3x3 window
-    logic win_valid;
+
+    // Made for each R , G , B separately.   
+    logic R_win_valid;
+    logic G_win_valid;
+    logic B_win_valid;
+        
 
     // sobel combinational maths
-    logic signed [11:0] gx_wire;
-    logic signed [11:0] gy_wire;
-    logic signed [11:0] abs_gx_wire;
-    logic signed [11:0] abs_gy_wire;
-    logic        [11:0] grad_wire;
 
-    assign gx_wire =
-        -$signed({4'b0000, r2_2}) + $signed({4'b0000, r2_0})
-        - ($signed({4'b0000, r1_2}) <<< 1) + ($signed({4'b0000, r1_0}) <<< 1)
-        - $signed({4'b0000, r0_2}) + $signed({4'b0000, r0_0});
+    // Made separately for R , G , B.    
 
-    assign gy_wire =
-          $signed({4'b0000, r2_2}) + ($signed({4'b0000, r2_1}) <<< 1)
-        + $signed({4'b0000, r2_0}) - $signed({4'b0000, r0_2})
-        - ($signed({4'b0000, r0_1}) <<< 1) - $signed({4'b0000, r0_0});
+    //for R     
+    logic signed [11:0] R_gx_wire;
+    logic signed [11:0] R_gy_wire;
+    logic signed [11:0] R_abs_gx_wire;
+    logic signed [11:0] R_abs_gy_wire;
+    logic        [11:0] R_grad_wire;
 
-    assign abs_gx_wire = (gx_wire < 0) ? -gx_wire : gx_wire;
-    assign abs_gy_wire = (gy_wire < 0) ? -gy_wire : gy_wire;
+    //for G    
+    logic signed [11:0] G_gx_wire;
+    logic signed [11:0] G_gy_wire;
+    logic signed [11:0] G_abs_gx_wire;
+    logic signed [11:0] G_abs_gy_wire;
+    logic        [11:0] G_grad_wire;
 
-    assign grad_wire = abs_gx_wire + abs_gy_wire;
+    //for B
+    logic signed [11:0] B_gx_wire;
+    logic signed [11:0] B_gy_wire;
+    logic signed [11:0] B_abs_gx_wire;
+    logic signed [11:0] B_abs_gy_wire;
+    logic        [11:0] B_grad_wire;
+
+    //for R    
+    assign R_gx_wire =
+        -$signed({4'b0000, R_r2_2}) + $signed({4'b0000, R_r2_0})
+        - ($signed({4'b0000, R_r1_2}) <<< 1) + ($signed({4'b0000, R_r1_0}) <<< 1)
+        - $signed({4'b0000, R_r0_2}) + $signed({4'b0000, R_r0_0});
+
+    assign R_gy_wire =
+        $signed({4'b0000, R_r2_2}) + ($signed({4'b0000, R_r2_1}) <<< 1)
+        + $signed({4'b0000, R_r2_0}) - $signed({4'b0000, R_r0_2})
+        - ($signed({4'b0000, R_r0_1}) <<< 1) - $signed({4'b0000, R_r0_0});
+
+    assign R_abs_gx_wire = (R_gx_wire < 0) ? -R_gx_wire : R_gx_wire;
+    assign R_abs_gy_wire = (R_gy_wire < 0) ? -R_gy_wire : R_gy_wire;
+
+    assign R_grad_wire = R_abs_gx_wire + R_abs_gy_wire;
+
+    //for G    
+    assign G_gx_wire =
+        -$signed({4'b0000, G_r2_2}) + $signed({4'b0000, G_r2_0})
+        - ($signed({4'b0000, G_r1_2}) <<< 1) + ($signed({4'b0000, G_r1_0}) <<< 1)
+        - $signed({4'b0000, G_r0_2}) + $signed({4'b0000, G_r0_0});
+
+    assign G_gy_wire =
+        $signed({4'b0000, G_r2_2}) + ($signed({4'b0000, G_r2_1}) <<< 1)
+        + $signed({4'b0000, G_r2_0}) - $signed({4'b0000, G_r0_2})
+        - ($signed({4'b0000, G_r0_1}) <<< 1) - $signed({4'b0000, G_r0_0});
+
+    assign G_abs_gx_wire = (G_gx_wire < 0) ? -G_gx_wire : G_gx_wire;
+    assign G_abs_gy_wire = (G_gy_wire < 0) ? -G_gy_wire : G_gy_wire;
+
+    assign G_grad_wire = G_abs_gx_wire + G_abs_gy_wire;        
+
+    //for B   
+    assign B_gx_wire =
+        -$signed({4'b0000, B_r2_2}) + $signed({4'b0000, B_r2_0})
+        - ($signed({4'b0000, B_r1_2}) <<< 1) + ($signed({4'b0000, B_r1_0}) <<< 1)
+        - $signed({4'b0000, B_r0_2}) + $signed({4'b0000, B_r0_0});
+
+    assign B_gy_wire =
+        $signed({4'b0000, B_r2_2}) + ($signed({4'b0000, B_r2_1}) <<< 1)
+        + $signed({4'b0000, B_r2_0}) - $signed({4'b0000, B_r0_2})
+        - ($signed({4'b0000, B_r0_1}) <<< 1) - $signed({4'b0000, B_r0_0});
+
+    assign B_abs_gx_wire = (B_gx_wire < 0) ? -B_gx_wire : B_gx_wire;
+    assign B_abs_gy_wire = (B_gy_wire < 0) ? -B_gy_wire : B_gy_wire;
+
+    assign B_grad_wire = B_abs_gx_wire + B_abs_gy_wire;    
+        
+        
+        
 
     always_ff @(posedge clk) begin
         if (rst) begin
@@ -93,9 +152,20 @@ module sobel #(
             valid_out <= 1'b0;
             pixel_out <= '0;
 
-            r0_0 <= '0; r0_1 <= '0; r0_2 <= '0;
-            r1_0 <= '0; r1_1 <= '0; r1_2 <= '0;
-            r2_0 <= '0; r2_1 <= '0; r2_2 <= '0;
+            //for R
+            R_r0_0 <= '0; R_r0_1 <= '0; R_r0_2 <= '0;
+            R_r1_0 <= '0; R_r1_1 <= '0; R_r1_2 <= '0;
+            R_r2_0 <= '0; R_r2_1 <= '0; R_r2_2 <= '0;
+
+            //for G
+            G_r0_0 <= '0; G_r0_1 <= '0; G_r0_2 <= '0;
+            G_r1_0 <= '0; G_r1_1 <= '0; G_r1_2 <= '0;
+            G_r2_0 <= '0; G_r2_1 <= '0; G_r2_2 <= '0;
+
+            //for B
+            B_r0_0 <= '0; B_r0_1 <= '0; B_r0_2 <= '0;
+            B_r1_0 <= '0; B_r1_1 <= '0; B_r1_2 <= '0;
+            B_r2_0 <= '0; B_r2_1 <= '0; B_r2_2 <= '0;
 
         end else begin
             valid_out <= 1'b0;
@@ -104,33 +174,99 @@ module sobel #(
                 // line buffers: read the old value at this column, then overwrite it.
                 // Reading and shifting in the same cycle keeps all three rows
                 // in the same column.
-                line_buffer1[col] <= pixel_in;
-                line_buffer2[col] <= line_buffer1[col];
 
+                //for R
+                R_line_buffer1[col] <= R_pixel_in;
+                R_line_buffer2[col] <= R_line_buffer1[col];
+
+                //for G
+                G_line_buffer1[col] <= G_pixel_in;
+                G_line_buffer2[col] <= G_line_buffer1[col];
+
+                //for B
+                B_line_buffer1[col] <= B_pixel_in;
+                B_line_buffer2[col] <= B_line_buffer1[col];
+                
                 // shift sliding window
-                r0_2 <= r0_1;
-                r0_1 <= r0_0;
-                r0_0 <= pixel_in;
 
-                r1_2 <= r1_1;
-                r1_1 <= r1_0;
-                r1_0 <= line_buffer1[col];
+                //for R
+                R_r0_2 <= R_r0_1;
+                R_r0_1 <= R_r0_0;
+                R_r0_0 <= R_pixel_in;
 
-                r2_2 <= r2_1;
-                r2_1 <= r2_0;
-                r2_0 <= line_buffer2[col];
+                R_r1_2 <= R_r1_1;
+                R_r1_1 <= R_r1_0;
+                R_r1_0 <= R_line_buffer1[col];
+
+                R_r2_2 <= R_r2_1;
+                R_r2_1 <= R_r2_0;
+                R_r2_0 <= R_line_buffer2[col];
+
+                //for G
+                G_r0_2 <= G_r0_1;
+                G_r0_1 <= G_r0_0;
+                G_r0_0 <= G_pixel_in;
+
+                G_r1_2 <= G_r1_1;
+                G_r1_1 <= G_r1_0;
+                G_r1_0 <= G_line_buffer1[col];
+
+                G_r2_2 <= G_r2_1;
+                G_r2_1 <= G_r2_0;
+                G_r2_0 <= G_line_buffer2[col];
+
+                //for B
+                B_r0_2 <= B_r0_1;
+                B_r0_1 <= B_r0_0;
+                B_r0_0 <= B_pixel_in;
+
+                B_r1_2 <= B_r1_1;
+                B_r1_1 <= B_r1_0;
+                B_r1_0 <= B_line_buffer1[col];
+
+                B_r2_2 <= B_r2_1;
+                B_r2_1 <= B_r2_0;
+                B_r2_0 <= B_line_buffer2[col];
 
                 // The window being loaded this cycle is complete once two full
                 // rows and two columns have gone in. Flag it alongside the window.
-                win_valid <= (row >= 2) && (col >= 2);
+
+                //for R
+                R_win_valid <= (row >= 2) && (col >= 2);
+
+                //for G
+                G_win_valid <= (row >= 2) && (col >= 2);
+
+                //for B
+                B_win_valid <= (row >= 2) && (col >= 2);
 
                 // Output stage: the window registers (and win_valid) hold the
                 // window loaded on the previous valid cycle.
-                valid_out <= win_valid;
-                if (grad_wire > 12'd255) begin
-                    pixel_out <= 8'd255;
+
+                //for R
+                valid_out <= R_win_valid;
+                if (R_grad_wire > 12'd255) begin
+                    pixel_out <= 24'd255;
                 end else begin
-                    pixel_out <= grad_wire[7:0];
+                    pixel_out <= R_grad_wire[7:0];
+                end
+
+
+                //for G
+                valid_out <= G_win_valid;
+                if (G_grad_wire > 12'd255) begin
+                    pixel_out <= 24'd255;
+                end else begin
+                    pixel_out <= G_grad_wire[7:0];
+                end
+
+
+                //for B
+                valid_out <= B_win_valid;
+                if (B_grad_wire > 12'd255) begin
+                    pixel_out <= 24'd255;
+                end else begin
+                    pixel_out <= B_grad_wire[7:0];
                 end
 
                 // update counters
