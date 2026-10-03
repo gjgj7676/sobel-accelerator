@@ -54,16 +54,16 @@ module sobel #(
 
     //Made separate line buffers for R , G , B
     // for R
-    logic [7:0] R_line_buffer1 [WIDTH];
-    logic [7:0] R_line_buffer2 [WIDTH];
+    logic [7:0] R_line_buffer1 [R_WIDTH];
+    logic [7:0] R_line_buffer2 [R_WIDTH];
 
     // for G
-    logic [7:0] G_line_buffer1 [WIDTH];
-    logic [7:0] G_line_buffer2 [WIDTH];
+    logic [7:0] G_line_buffer1 [G_WIDTH];
+    logic [7:0] G_line_buffer2 [G_WIDTH];
 
     // for B
-    logic [7:0] B_line_buffer1 [WIDTH];
-    logic [7:0] B_line_buffer2 [WIDTH];   
+    logic [7:0] B_line_buffer1 [B_WIDTH];
+    logic [7:0] B_line_buffer2 [B_WIDTH];   
 
     // 3x3 window shift registers (r0 = newest row, r2 = oldest row)
 
@@ -169,9 +169,15 @@ module sobel #(
         
     always_ff @(posedge clk) begin
         if (rst) begin
-            col       <= '0;
-            row       <= '0;
-            win_valid <= 1'b0;
+            R_col       <= '0;
+            R_row       <= '0;
+            R_win_valid <= 1'b0;
+            G_col       <= '0;
+            G_row       <= '0;
+            G_win_valid <= 1'b0;
+            B_col       <= '0;
+            B_row       <= '0;
+            B_win_valid <= 1'b0;
             valid_out <= 1'b0;
             pixel_out <= '0;
 
@@ -199,16 +205,16 @@ module sobel #(
                 // in the same column.
 
                 //for R
-                R_line_buffer1[col] <= R_pixel_in;
-                R_line_buffer2[col] <= R_line_buffer1[col];
+                R_line_buffer1[R_col] <= R_pixel_in;
+                R_line_buffer2[R_col] <= R_line_buffer1[R_col];
 
                 //for G
-                G_line_buffer1[col] <= G_pixel_in;
-                G_line_buffer2[col] <= G_line_buffer1[col];
+                G_line_buffer1[G_col] <= G_pixel_in;
+                G_line_buffer2[G_col] <= G_line_buffer1[G_col];
 
                 //for B
-                B_line_buffer1[col] <= B_pixel_in;
-                B_line_buffer2[col] <= B_line_buffer1[col];
+                B_line_buffer1[B_col] <= B_pixel_in;
+                B_line_buffer2[B_col] <= B_line_buffer1[B_col];
                 
                 // shift sliding window
 
@@ -255,13 +261,13 @@ module sobel #(
                 // rows and two columns have gone in. Flag it alongside the window.
 
                 //for R
-                R_win_valid <= (row >= 2) && (col >= 2);
+                R_win_valid <= (R_row >= 2) && (R_col >= 2);
 
                 //for G
-                G_win_valid <= (row >= 2) && (col >= 2);
+                G_win_valid <= (G_row >= 2) && (G_col >= 2);
 
                 //for B
-                B_win_valid <= (row >= 2) && (col >= 2);
+                B_win_valid <= (B_row >= 2) && (B_col >= 2);
 
                 // Output stage: the window registers (and win_valid) hold the
                 // window loaded on the previous valid cycle.
@@ -295,27 +301,27 @@ module sobel #(
                 // update counters
 
                 //for R
-                if (16'(col) == image_width - 16'd1) begin
-                    col <= '0;
-                    row <= row + 1'b1;
+                if (16'(R_col) == image_width - 16'd1) begin
+                    R_col <= '0;
+                    R_row <= R_row + 1'b1;
                 end else begin
-                    col <= col + 1'b1;
+                    R_col <= R_col + 1'b1;
                 end
 
                 //for G
-                if (16'(col) == image_width - 16'd1) begin
-                    col <= '0;
-                    row <= row + 1'b1;
+                if (16'(G_col) == image_width - 16'd1) begin
+                    G_col <= '0;
+                    G_row <= G_row + 1'b1;
                 end else begin
-                    col <= col + 1'b1;
+                    G_col <= G_col + 1'b1;
                 end
 
                 //for B
-                if (16'(col) == image_width - 16'd1) begin
-                    col <= '0;
-                    row <= row + 1'b1;
+                if (16'(B_col) == image_width - 16'd1) begin
+                    B_col <= '0;
+                    B_row <= B_row + 1'b1;
                 end else begin
-                    col <= col + 1'b1;
+                    B_col <= B_col + 1'b1;
                 end
                 
             end
