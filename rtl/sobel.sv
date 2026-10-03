@@ -326,6 +326,8 @@ module sobel #(
                 
             end
         end
+
+        RGB_assembler( /*write this later*/  )   
     end
 
 endmodule
