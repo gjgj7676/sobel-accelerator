@@ -14,9 +14,9 @@ module sobel #(
     input  logic        rst,
     input  logic [15:0] image_width,   // actual image width
     input  logic        valid_in,
-    input  logic [7:0]  pixel_in,
+    input  logic [23:0]  pixel_in,
     output logic        valid_out,
-    output logic [7:0]  pixel_out
+    output logic [23:0]  pixel_out
 );
 
     localparam int COL_W = $clog2(WIDTH);
