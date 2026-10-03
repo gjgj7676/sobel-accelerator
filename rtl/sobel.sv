@@ -25,6 +25,8 @@ module sobel #(
     logic [COL_W-1:0] col;
     logic [15:0]      row;
 
+    module rgb_splitter (  //write this later//  );
+
     // line buffers: line_buffer1 holds the previous row, line_buffer2 the one before
     logic [7:0] line_buffer1 [WIDTH];
     logic [7:0] line_buffer2 [WIDTH];
