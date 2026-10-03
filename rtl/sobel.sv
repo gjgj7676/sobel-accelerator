@@ -28,13 +28,37 @@ module sobel #(
     module rgb_splitter (  //write this later//  );
 
     // line buffers: line_buffer1 holds the previous row, line_buffer2 the one before
-    logic [7:0] line_buffer1 [WIDTH];
-    logic [7:0] line_buffer2 [WIDTH];
+
+    //Made separate line buffers for R , G , B
+    // for R
+    logic [7:0] R_line_buffer1 [WIDTH];
+    logic [7:0] R_line_buffer2 [WIDTH];
+
+    // for G
+    logic [7:0] G_line_buffer1 [WIDTH];
+    logic [7:0] G_line_buffer2 [WIDTH];
+
+    // for B
+    logic [7:0] B_line_buffer1 [WIDTH];
+    logic [7:0] B_line_buffer2 [WIDTH];   
 
     // 3x3 window shift registers (r0 = newest row, r2 = oldest row)
-    logic [7:0] r0_0, r0_1, r0_2;
-    logic [7:0] r1_0, r1_1, r1_2;
-    logic [7:0] r2_0, r2_1, r2_2;
+
+    //Made separate shift registers for R , G , B   
+    //for R    
+    logic [7:0] R_r0_0, R_r0_1, R_r0_2;
+    logic [7:0] R_r1_0, R_r1_1, R_r1_2;
+    logic [7:0] R_r2_0, R_r2_1, R_r2_2;
+
+    //for G
+    logic [7:0] G_r0_0, G_r0_1, G_r0_2;
+    logic [7:0] G_r1_0, G_r1_1, G_r1_2;
+    logic [7:0] G_r2_0, G_r2_1, G_r2_2;
+
+    //for B
+    logic [7:0] B_r0_0, B_r0_1, B_r0_2;
+    logic [7:0] B_r1_0, B_r1_1, B_r1_2;
+    logic [7:0] B_r2_0, B_r2_1, B_r2_2;   
 
     // high when the window registers hold a complete 3x3 window
     logic win_valid;
