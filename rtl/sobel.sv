@@ -19,13 +19,36 @@ module sobel #(
     output logic [23:0]  pixel_out
 );
 
+    
+    //for whole RGB image
     localparam int COL_W = $clog2(WIDTH);
 
-    // position of the pixel currently being accepted
+    //for R
+    localparam int COL_W = $clog2(R_WIDTH);
+
+    //for G
+    localparam int COL_W = $clog2(G_WIDTH);
+
+    //for B
+    localparam int COL_W = $clog2(B_WIDTH);
+
+    // position of the pixel currently being accepted (This is for whole RGB image)
     logic [COL_W-1:0] col;
     logic [15:0]      row;
 
-    module rgb_splitter (  //write this later//  );
+    //for R
+    logic [COL_W-1:0] R_col;
+    logic [15:0]      R_row;
+
+    //for G
+    logic [COL_W-1:0] G_col;
+    logic [15:0]      G_row;
+    
+    //for B
+    logic [COL_W-1:0] B_col;
+    logic [15:0]      B_row;
+
+    module rgb_splitter (  /*write this later*/  );
 
     // line buffers: line_buffer1 holds the previous row, line_buffer2 the one before
 
@@ -270,12 +293,31 @@ module sobel #(
                 end
 
                 // update counters
+
+                //for R
                 if (16'(col) == image_width - 16'd1) begin
                     col <= '0;
                     row <= row + 1'b1;
                 end else begin
                     col <= col + 1'b1;
                 end
+
+                //for G
+                if (16'(col) == image_width - 16'd1) begin
+                    col <= '0;
+                    row <= row + 1'b1;
+                end else begin
+                    col <= col + 1'b1;
+                end
+
+                //for B
+                if (16'(col) == image_width - 16'd1) begin
+                    col <= '0;
+                    row <= row + 1'b1;
+                end else begin
+                    col <= col + 1'b1;
+                end
+                
             end
         end
     end
