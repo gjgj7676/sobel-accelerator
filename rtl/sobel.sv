@@ -140,10 +140,10 @@ module sobel #(
     assign B_abs_gy_wire = (B_gy_wire < 0) ? -B_gy_wire : B_gy_wire;
 
     assign B_grad_wire = B_abs_gx_wire + B_abs_gy_wire;    
-        
-        
-        
 
+    // Take the maximum of grad_wire of R,G,B and also this maximum should be of 8 bits so take min with respect to 255 (i.e.1111 1111)
+    out_grad_wire = min(255,max(R_grad_wire , G_grad_wire , B_grad_wire));
+        
     always_ff @(posedge clk) begin
         if (rst) begin
             col       <= '0;
