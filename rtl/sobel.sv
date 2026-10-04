@@ -16,21 +16,12 @@ module sobel #(
     input  logic        valid_in,
     input  logic [23:0]  pixel_in,
     output logic        valid_out,
-    output logic [23:0]  pixel_out
+    output logic [7:0]  pixel_out      //As output pixel is clamped to 8 bits 
 );
 
     
     //for whole RGB image
     localparam int COL_W = $clog2(WIDTH);
-
-    //for R
-    localparam int COL_W = $clog2(R_WIDTH);
-
-    //for G
-    localparam int COL_W = $clog2(G_WIDTH);
-
-    //for B
-    localparam int COL_W = $clog2(B_WIDTH);
 
     //Splitting RGB image to R , G , B pixels
     logic [7:0] R,G,B;
@@ -42,54 +33,23 @@ module sobel #(
     logic [COL_W-1:0] col;
     logic [15:0]      row;
 
-    //for R
-    logic [COL_W-1:0] R_col;
-    logic [15:0]      R_row;
-
-    //for G
-    logic [COL_W-1:0] G_col;
-    logic [15:0]      G_row;
-    
-    //for B
-    logic [COL_W-1:0] B_col;
-    logic [15:0]      B_row;
-
     // line buffers: line_buffer1 holds the previous row, line_buffer2 the one before
 
     //Made separate line buffers for R , G , B
     // for R
-    logic [7:0] R_line_buffer1 [R_WIDTH];
-    logic [7:0] R_line_buffer2 [R_WIDTH];
+    logic [7:0] R_line_buffer1 [WIDTH];
+    logic [7:0] R_line_buffer2 [WIDTH];
 
     // for G
-    logic [7:0] G_line_buffer1 [G_WIDTH];
-    logic [7:0] G_line_buffer2 [G_WIDTH];
+    logic [7:0] G_line_buffer1 [WIDTH];
+    logic [7:0] G_line_buffer2 [WIDTH];
 
     // for B
-    logic [7:0] B_line_buffer1 [B_WIDTH];
-    logic [7:0] B_line_buffer2 [B_WIDTH];   
+    logic [7:0] B_line_buffer1 [WIDTH];
+    logic [7:0] B_line_buffer2 [WIDTH];   
 
     // 3x3 window shift registers (r0 = newest row, r2 = oldest row)
-
-    logic [24:0] r0_0, r0_1, r0_2;
-    logic [24:0] r1_0, r1_1, r1_2;
-    logic [24:0] r2_0, r2_1, r2_2;
-
-    
-    //Each input pixel in RGB is represented as this 
-    logic [24:0] r0_0 = (R_r0_0, G_r0_0, B_r0_0);
-    logic [24:0] r0_1 = (R_r0_1, G_r0_1, B_r0_1);
-    logic [24:0] r0_2 = (R_r0_2, G_r0_2, B_r0_2);
-    logic [24:0] r1_0 = (R_r1_0, G_r1_0, B_r1_0);
-    logic [24:0] r1_1 = (R_r1_1, G_r1_1, B_r1_1);
-    logic [24:0] r1_2 = (R_r1_2, G_r1_2, B_r1_2);
-    logic [24:0] r2_0 = (R_r2_0, G_r2_0, B_r2_0);
-    logic [24:0] r2_1 = (R_r2_1, G_r2_1, B_r2_1);
-    logic [24:0] r2_2 = (R_r2_2, G_r2_2, B_r2_2);
-
-
-
-
+   
     //Made separate shift registers for R , G , B   
     //for R    
     logic [7:0] R_r0_0, R_r0_1, R_r0_2;
@@ -106,14 +66,8 @@ module sobel #(
     logic [7:0] B_r1_0, B_r1_1, B_r1_2;
     logic [7:0] B_r2_0, B_r2_1, B_r2_2;   
 
-    // high when the window registers hold a complete 3x3 window
-
-    // Made for each R , G , B separately.   
-    logic R_win_valid;
-    logic G_win_valid;
-    logic B_win_valid;
-        
-
+    // high when the window registers hold a complete 3x3 window  
+    logic win_valid;      
     // sobel combinational maths
 
     // Made separately for R , G , B.    
@@ -187,20 +141,20 @@ module sobel #(
 
     assign B_grad_wire = B_abs_gx_wire + B_abs_gy_wire;    
 
-    // Take the maximum of grad_wire of R,G,B and also this maximum should be of 8 bits so take min with respect to 255 (i.e.1111 1111)
-    out_grad_wire = min(255,max(R_grad_wire , G_grad_wire , B_grad_wire));
-        
+    // Take the maximum of grad_wire of R,G,B and also this maximum should be of 12 bits.We get 8 bits after clamping.
+    logic [11:0] x; 
+    logic [11:0] max_grad_wire;
+    logic [7:0]  out_grad_wire;
+    
+    assign x = (R_grad_wire > G_grad_wire) ? R_grad_wire : G_grad_wire;
+    assign max_grad_wire = (x > B_grad_wire) ? x : B_grad_wire;
+    assign out_grad_wire =  (max_grad_wire > 12'd255) ? 8'd255 : max_grad_wire[7:0];
+           
     always_ff @(posedge clk) begin
         if (rst) begin
-            R_col       <= '0;
-            R_row       <= '0;
-            R_win_valid <= 1'b0;
-            G_col       <= '0;
-            G_row       <= '0;
-            G_win_valid <= 1'b0;
-            B_col       <= '0;
-            B_row       <= '0;
-            B_win_valid <= 1'b0;
+            col       <= '0;
+            row       <= '0;
+            win_valid <= 1'b0;
             valid_out <= 1'b0;
             pixel_out <= '0;
 
@@ -228,23 +182,23 @@ module sobel #(
                 // in the same column.
 
                 //for R
-                R_line_buffer1[R_col] <= R_pixel_in;
-                R_line_buffer2[R_col] <= R_line_buffer1[R_col];
+                R_line_buffer1[col] <= R;
+                R_line_buffer2[col] <= R_line_buffer1[col];
 
                 //for G
-                G_line_buffer1[G_col] <= G_pixel_in;
-                G_line_buffer2[G_col] <= G_line_buffer1[G_col];
+                G_line_buffer1[col] <= G;
+                G_line_buffer2[col] <= G_line_buffer1[col];
 
                 //for B
-                B_line_buffer1[B_col] <= B_pixel_in;
-                B_line_buffer2[B_col] <= B_line_buffer1[B_col];
+                B_line_buffer1[col] <= B;
+                B_line_buffer2[col] <= B_line_buffer1[col];
                 
                 // shift sliding window
 
                 //for R
                 R_r0_2 <= R_r0_1;
                 R_r0_1 <= R_r0_0;
-                R_r0_0 <= R_pixel_in;
+                R_r0_0 <= R;
 
                 R_r1_2 <= R_r1_1;
                 R_r1_1 <= R_r1_0;
@@ -257,7 +211,7 @@ module sobel #(
                 //for G
                 G_r0_2 <= G_r0_1;
                 G_r0_1 <= G_r0_0;
-                G_r0_0 <= G_pixel_in;
+                G_r0_0 <= G;
 
                 G_r1_2 <= G_r1_1;
                 G_r1_1 <= G_r1_0;
@@ -270,7 +224,7 @@ module sobel #(
                 //for B
                 B_r0_2 <= B_r0_1;
                 B_r0_1 <= B_r0_0;
-                B_r0_0 <= B_pixel_in;
+                B_r0_0 <= B;
 
                 B_r1_2 <= B_r1_1;
                 B_r1_1 <= B_r1_0;
@@ -282,91 +236,25 @@ module sobel #(
 
                 // The window being loaded this cycle is complete once two full
                 // rows and two columns have gone in. Flag it alongside the window.
-
-                //for R
-                R_win_valid <= (R_row >= 2) && (R_col >= 2);
-
-                //for G
-                G_win_valid <= (G_row >= 2) && (G_col >= 2);
-
-                //for B
-                B_win_valid <= (B_row >= 2) && (B_col >= 2);
+                win_valid <= (row >= 2) && (col >= 2);
 
                 // Output stage: the window registers (and win_valid) hold the
+                valid_out <= win_valid;
                 // window loaded on the previous valid cycle.
-
-                //for R
-                valid_out <= R_win_valid;
-                if (R_grad_wire > 12'd255) begin
-                    pixel_out <= 24'd255;
-                end else begin
-                    pixel_out <= R_grad_wire[7:0];
-                end
-
-
-                //for G
-                valid_out <= G_win_valid;
-                if (G_grad_wire > 12'd255) begin
-                    pixel_out <= 24'd255;
-                end else begin
-                    pixel_out <= G_grad_wire[7:0];
-                end
-
-
-                //for B
-                valid_out <= B_win_valid;
-                if (B_grad_wire > 12'd255) begin
-                    pixel_out <= 24'd255;
-                end else begin
-                    pixel_out <= B_grad_wire[7:0];
+               //RGB after combining. It is already clamped to 8 bits above.
+                if (win_valid) begin
+                    pixel_out <= out_grad_wire;
                 end
 
                 // update counters
-
-                //for R
-                if (16'(R_col) == image_width - 16'd1) begin
-                    R_col <= '0;
-                    R_row <= R_row + 1'b1;
+                if (col == image_width - 16'd1) begin
+                    col <= '0;
+                    row <= row + 1'b1;
                 end else begin
-                    R_col <= R_col + 1'b1;
-                end
-
-                //for G
-                if (16'(G_col) == image_width - 16'd1) begin
-                    G_col <= '0;
-                    G_row <= G_row + 1'b1;
-                end else begin
-                    G_col <= G_col + 1'b1;
-                end
-
-                //for B
-                if (16'(B_col) == image_width - 16'd1) begin
-                    B_col <= '0;
-                    B_row <= B_row + 1'b1;
-                end else begin
-                    B_col <= B_col + 1'b1;
+                    col <= col + 1'b1;
                 end
                 
             end
         end
-
-        //combining R,G,B elements into a single pixel
-        assign grad_r0_0 = (R_grad_wire_0, G_grad_wire_0 , Bgrad_wire_0);
-        assign grad_r0_1 = 
-        assign grad_r0_2 =
-        assign grad_r1_0 =   
-        assign grad_r1_1 =
-        assign grad_r1_2 =
-        assign grad_r2_0 =
-        assign graf_r2_1 =
-        assign grad_r2_2 =    
-
-        //Output image obtained     
-        logic [24:0] grad_r0_0, grad_r0_1, grad_r0_2;
-        logic [24:0] grad_r1_0, grad_r1_1, grad_r1_2;
-        logic [24:0] grad_r2_0, grad_r2_1, grad_r2_2;
-
-        RGB_assembler( /*write this later*/  )   
     end
-
 endmodule
