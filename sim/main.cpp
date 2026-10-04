@@ -86,15 +86,16 @@ int main(int argc, char** argv) {
     // centred on pixel n appears on clock edge n + width + 2. Run a couple of
     // extra clocks after the last pixel to collect the final results, and store
     // each result at the position of its centre pixel.
-    const int total_clocks = width * height + 2;
-    for (int i = 0; i < total_clocks; i++) {
+    const int total_clocks = width * height + width + 2;      // Write the reason for adding an additional width 
+    for (int i = 0; i < total_clocks; i++) {                           ------------
+                                                                                   | ----->  This section left for updating
         top->valid_in = 1;
         top->pixel_in = (i < width * height) ? image[i] : 0;
 
         top->clk = 0;
         top->eval();
-        top->clk = 1;
-        top->eval();
+        top->clk = 1;                                                              |
+        top->eval();                                                   -------------
 
         if (top->valid_out) {
             int centre = i - (width + 2);
@@ -102,11 +103,13 @@ int main(int argc, char** argv) {
                 output[centre] = top->pixel_out;
             }
         }
-    }
+    }                                 
 
     delete top;
 
     std::ofstream outfile(output_file);
+
+    //write output PGM here:-
 
     outfile << "P2\n";
     outfile << width << " " << height << "\n";
@@ -121,7 +124,8 @@ int main(int argc, char** argv) {
 
     outfile.close();
 
-    std::cout << "Output written to " << output_file << "\n";
+    std::cout << "RGB sobel output written to " << output_file << "\n";
 
     return 0;
+    
 }
