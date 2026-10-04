@@ -43,12 +43,28 @@ int main(int argc, char** argv) {
 
     std::vector<int> image(width * height);
 
+    //changed for R , G, B pixels
     for (int i = 0; i < width * height; i++) {
-        infile >> image[i];
-    }
-    infile.close();
 
-    std::cout << "Loaded image: " << width << "x" << height << "\n";
+        int R;
+        int G;
+        int B;
+        
+        infile >> R >> G >> B;
+
+        if (!infile) {
+            std::cerr << "Error while reading RGB pixel "
+                      << i << "\n";
+            return 1;
+        }
+
+        image[i] =
+              (static_cast<uint32_t>(R) << 16)
+            | (static_cast<uint32_t>(G) << 8)
+            |  static_cast<uint32_t>(B);
+    }
+    
+    infile.close();
 
     Vsobel* top = new Vsobel;
     top->image_width = width;
