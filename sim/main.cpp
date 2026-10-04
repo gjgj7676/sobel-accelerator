@@ -86,16 +86,16 @@ int main(int argc, char** argv) {
     // centred on pixel n appears on clock edge n + width + 2. Run a couple of
     // extra clocks after the last pixel to collect the final results, and store
     // each result at the position of its centre pixel.
-    const int total_clocks = width * height + width + 2;      // Write the reason for adding an additional width 
-    for (int i = 0; i < total_clocks; i++) {                           ------------
-                                                                                   | ----->  This section left for updating
-        top->valid_in = 1;
-        top->pixel_in = (i < width * height) ? image[i] : 0;
+    const int total_clocks = width * height + 2;    ----------------------------
+    for (int i = 0; i < total_clocks; i++) {                                    |
+                                                                                |  
+        top->valid_in = 1;                                                      |---------> Some changes need to be done here 
+        top->pixel_in = (i < width * height) ? image[i] : 0;                    |
 
         top->clk = 0;
         top->eval();
-        top->clk = 1;                                                              |
-        top->eval();                                                   -------------
+        top->clk = 1;                                                           |  
+        top->eval();                                  --------------------------                 
 
         if (top->valid_out) {
             int centre = i - (width + 2);
