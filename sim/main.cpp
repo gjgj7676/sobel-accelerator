@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#incude <cstdint>
 
 int main(int argc, char** argv) {
     if (argc < 3) {
@@ -15,16 +16,30 @@ int main(int argc, char** argv) {
     std::string input_file = argv[1];
     std::string output_file = argv[2];
 
+    //RGB PPM input
     std::ifstream infile(input_file);
     if (!infile) {
-        std::cout << "Failed to open input file\n";
+        std::cerr << "Failed to open input file: "
+                  << input_file << "\n";
         return 1;
     }
+    
     std::string magic;
     int width, height, maxval;
     infile >> magic;
+
+    if (magic != "P3") {             //P3 is for ASCII RGB PPM
+        std::cerr << "Error: input file is not an ASCII RGB PPM (P3).\n";
+        std::cerr << "Expected P3, got: " << magic << "\n";
+        return 1;
+    }
+    
     infile >> width >> height;
     infile >> maxval;
+
+    std::cout << "Loaded RGB image: "
+          << width << "x" << height
+          << "  maxval=" << maxval << "\n";
 
     std::vector<int> image(width * height);
 
