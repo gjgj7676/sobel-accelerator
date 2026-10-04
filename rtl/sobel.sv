@@ -1,6 +1,6 @@
 // Streaming 3x3 Sobel edge detector.
 //
-// Input:  one greyscale pixel per clock (row-major) while valid_in is high.
+// Input:  one RGB pixel per clock (24-bit RGB,row-major) while valid_in is high.
 // Output: gradient magnitude |gx| + |gy|, clamped to 255.
 //
 // Timing: the result for the window centred on input pixel n appears with
