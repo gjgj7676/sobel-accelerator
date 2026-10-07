@@ -82,40 +82,37 @@ int main(int argc, char** argv) {
 
     std::vector<int> output(width * height, 0);
 
-    // The module has a latency of (width + 2) clocks: the result for the window
-    // centred on pixel n appears on clock edge n + width + 2. Run a couple of
-    // extra clocks after the last pixel to collect the final results, and store
-    // each result at the position of its centre pixel.
-    const int total_clocks = width * height + 2;    
-    for (int i = 0; i < total_clocks; i++) {                                   
+    // The module has a latency of (width + 2) clocks.
+    // The final real pixel requires one additional accepted dummy
+    // pixel to produce the last valid output.
+    const int total_clocks = width * height + 1;
+
+    for (int i = 0; i < total_clocks; i++) {
 
         if (i < width * height) {
             top->valid_in = 1;
             top->pixel_in = image[i];
         } else {
-            top->valid_in = 0;
+            // One accepted dummy pixel is required to flush the final window.
+            top->valid_in = 1;
             top->pixel_in = 0;
         }
+
         top->clk = 0;
         top->eval();
-        
-        top->clk = 1;                                                         
-        top->eval();                                                  
+
+        top->clk = 1;
+        top->eval();
 
         if (top->valid_out) {
 
-            std::cout << "valid_out at i = "        //for temporary begugging
-                      << i
-                      << ", pixel_out = "
-                      << (int)top->pixel_out
-                      << std::endl;
-
             int centre = i - (width + 2);
+
             if (centre >= 0 && centre < width * height) {
                 output[centre] = top->pixel_out;
             }
         }
-    }                                 
+    }
 
     delete top;
 

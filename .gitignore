@@ -45,3 +45,10 @@ images_in/..
 images_out/
 build_pgm/
 build_sv/
+images_in/
+.venv/
+__pycache__/
+*.pyc
+*.ppm
+*.pgm
+*.png

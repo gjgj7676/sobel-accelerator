@@ -22,6 +22,10 @@ module sobel #(
     
     //for whole RGB image
     localparam int COL_W = $clog2(WIDTH);
+    
+    logic [COL_W-1:0] image_width_col;
+
+    assign image_width_col = image_width[COL_W-1:0];
 
     //Splitting RGB image to R , G , B pixels
     logic [7:0] R,G,B;
@@ -247,7 +251,7 @@ module sobel #(
                 end
 
                 // update counters
-                if (col == image_width - 16'd1) begin
+                if (col == image_width_col - 1'b1) begin
                     col <= '0;
                     row <= row + 1'b1;
                 end else begin

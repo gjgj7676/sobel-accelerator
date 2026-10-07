@@ -17,7 +17,7 @@ all: sobel process
 sobel:
 	verilator --cc rtl/sobel.sv --exe sim/main.cpp --build
 
-# Process all images
+# Process all RGB images
 process:
 	mkdir -p "$(PGM_DIR)"
 	mkdir -p "$(OUT_DIR)"
@@ -27,9 +27,9 @@ process:
 			name=$${base%.*}; \
 			safe_name=$$(echo "$$name" | tr ' ' '_'); \
 			echo "Processing $$base"; \
-			convert "$$file" -strip -colorspace Gray -depth 8 -compress none \
-			    -define pgm:format=ascii "$(PGM_DIR)/$$safe_name.pgm"; \
-			./obj_dir/Vsobel "$(PGM_DIR)/$$safe_name.pgm" \
+			convert "$$file" -strip -depth 8 -compress none \
+			    -define ppm:format=ascii "$(PGM_DIR)/$$safe_name.ppm"; \
+			./obj_dir/Vsobel "$(PGM_DIR)/$$safe_name.ppm" \
 			    "$(PGM_DIR)/$${safe_name}_out.pgm"; \
 			convert "$(PGM_DIR)/$${safe_name}_out.pgm" \
 			    "$(OUT_DIR)/$${safe_name}_sobel.png"; \
@@ -37,9 +37,8 @@ process:
 	done
 	@echo "Done."
 
-# ---------------------------------------------------------------
+
 # Pure SystemVerilog testbench flow (needs Verilator 5 or newer)
-# ---------------------------------------------------------------
 
 VERILATOR_SV := verilator --binary --timing --timescale 1ns/1ps -Wno-fatal
 
@@ -52,31 +51,34 @@ tb:
 test: tb
 	./$(SV_DIR)/obj/Vsobel_tb
 
-# Image pipeline testbench: PGM in, Sobel, PGM out
+# Image pipeline testbench: RGB PPM in, Sobel, grayscale PGM out
 img_tb:
 	mkdir -p $(SV_DIR)
 	$(VERILATOR_SV) --top-module sobel_image_tb \
 	    rtl/sobel.sv tb/sobel_image_tb.sv -Mdir $(SV_DIR)/img
 
-# Image -> greyscale PGM -> SystemVerilog sim -> PGM -> image, for everything in images_in
+
+# RGB image -> P3 PPM -> SystemVerilog RGB simulation -> P2 PGM -> PNG
 process_sv: img_tb
-	mkdir -p "$(PGM_DIR)"
+	mkdir -p "$(SV_DIR)"
 	mkdir -p "$(OUT_DIR)"
+
 	@for file in "$(IN_DIR)"/*; do \
 		if [ -f "$$file" ]; then \
 			base=$$(basename "$$file"); \
 			name=$${base%.*}; \
 			safe_name=$$(echo "$$name" | tr ' ' '_'); \
-			echo "Processing $$base"; \
-			convert "$$file" -strip -colorspace Gray -depth 8 -compress none \
-			    -define pgm:format=ascii "$(PGM_DIR)/$$safe_name.pgm"; \
+			echo "Processing RGB $$base"; \
+			convert "$$file" -strip -depth 8 -compress none \
+			    -define ppm:format=ascii "$(SV_DIR)/$$safe_name.ppm"; \
 			./$(SV_DIR)/img/Vsobel_image_tb \
-			    +in="$(PGM_DIR)/$$safe_name.pgm" \
-			    +out="$(PGM_DIR)/$${safe_name}_out.pgm" || exit 1; \
-			convert "$(PGM_DIR)/$${safe_name}_out.pgm" \
-			    "$(OUT_DIR)/$${safe_name}_sobel.png"; \
+			    +in="$(SV_DIR)/$$safe_name.ppm" \
+			    +out="$(SV_DIR)/$${safe_name}_out.pgm"; \
+			convert "$(SV_DIR)/$${safe_name}_out.pgm" \
+			    "$(OUT_DIR)/$${safe_name}_sobel_sv.png"; \
 		fi; \
 	done
+
 	@echo "Done."
 
 clean:
