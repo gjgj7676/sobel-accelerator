@@ -5,7 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#incude <cstdint>
+#include <cstdint>
 
 int main(int argc, char** argv) {
     if (argc < 3) {
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
           << width << "x" << height
           << "  maxval=" << maxval << "\n";
 
-    std::vector<int> image(width * height);
+    std::vector<uint32_t> image(width * height);
 
     //changed for R , G, B pixels
     for (int i = 0; i < width * height; i++) {
@@ -86,18 +86,30 @@ int main(int argc, char** argv) {
     // centred on pixel n appears on clock edge n + width + 2. Run a couple of
     // extra clocks after the last pixel to collect the final results, and store
     // each result at the position of its centre pixel.
-    const int total_clocks = width * height + 2;    ----------------------------
-    for (int i = 0; i < total_clocks; i++) {                                    |
-                                                                                |  
-        top->valid_in = 1;                                                      |---------> Some changes need to be done here 
-        top->pixel_in = (i < width * height) ? image[i] : 0;                    |
+    const int total_clocks = width * height + 2;    
+    for (int i = 0; i < total_clocks; i++) {                                   
 
+        if (i < width * height) {
+            top->valid_in = 1;
+            top->pixel_in = image[i];
+        } else {
+            top->valid_in = 0;
+            top->pixel_in = 0;
+        }
         top->clk = 0;
         top->eval();
-        top->clk = 1;                                                           |  
-        top->eval();                                  --------------------------                 
+        
+        top->clk = 1;                                                         
+        top->eval();                                                  
 
         if (top->valid_out) {
+
+            std::cout << "valid_out at i = "        //for temporary begugging
+                      << i
+                      << ", pixel_out = "
+                      << (int)top->pixel_out
+                      << std::endl;
+
             int centre = i - (width + 2);
             if (centre >= 0 && centre < width * height) {
                 output[centre] = top->pixel_out;
